@@ -19,7 +19,7 @@ function headersParam(headers) {
 // Easiest way to get script contents with whitespace is by copying script node in DevTools.
 const blockAllExceptInlineScriptCsp = headersParam([[
   'Content-Security-Policy',
-  `default-src 'none'; script-src 'sha256-qZLV55/xxILbIrha9pgX0OdkZMhOlaIgfpEo/6Dly2U='`,
+  `default-src 'none'; script-src 'sha256-NCWlI90TxQpIfghtBWJyNU5Y92Nj8XhO+AYMm0gqGfQ='`,
 ]]);
 
 /**
@@ -47,6 +47,7 @@ module.exports = [
   },
   {
     artifacts: {
+      _maxChromiumMilestone: 91,
       RobotsTxt: {
         status: null,
         content: null,
@@ -54,19 +55,13 @@ module.exports = [
       InspectorIssues: {
         contentSecurityPolicy: [
           {
-            // TODO: Fix connect-src violation when fetching robots.txt.
             // https://github.com/GoogleChrome/lighthouse/issues/10225
+            //
+            // Fixed with new fetcher using M92.
             blockedURL: 'http://localhost:10200/robots.txt',
             violatedDirective: 'connect-src',
             isReportOnly: false,
             contentSecurityPolicyViolationType: 'kURLViolation',
-          },
-          {
-            // TODO: Fix style-src-elem violation when checking tap targets.
-            // https://github.com/GoogleChrome/lighthouse/issues/11862
-            violatedDirective: 'style-src-elem',
-            isReportOnly: false,
-            contentSecurityPolicyViolationType: 'kInlineViolation',
           },
         ],
       },
@@ -75,10 +70,33 @@ module.exports = [
         // https://github.com/GoogleChrome/lighthouse/pull/12044#issuecomment-788274938
         //
         // Fixed with new fetcher using M92.
-        _maxChromiumMilestone: 91,
         sourceMapUrl: 'http://localhost:10200/source-map/script.js.map',
         errorMessage: 'Error: Timed out fetching resource.',
         map: undefined,
+      }],
+    },
+    lhr: {
+      requestedUrl: 'http://localhost:10200/csp.html?' + blockAllExceptInlineScriptCsp,
+      finalUrl: 'http://localhost:10200/csp.html?' + blockAllExceptInlineScriptCsp,
+      audits: {},
+    },
+  },
+  {
+    // Same CSP as above, but verifies correct behavior for M92.
+    artifacts: {
+      _minChromiumMilestone: 92,
+      RobotsTxt: {
+        status: 404,
+        content: null,
+      },
+      InspectorIssues: {
+        contentSecurityPolicy: [
+        ],
+      },
+      SourceMaps: [{
+        sourceMapUrl: 'http://localhost:10200/source-map/script.js.map',
+        map: {},
+        errorMessage: undefined,
       }],
     },
     lhr: {

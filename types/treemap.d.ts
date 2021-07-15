@@ -7,7 +7,16 @@
 declare global {
   module LH.Treemap {
     interface Options {
-      lhr: LH.Result;
+      lhr: {
+        requestedUrl: string;
+        finalUrl: string;
+        audits: {
+          'script-treemap-data': LH.Audit.Result;
+        };
+        configSettings: {
+          locale: LH.Locale;
+        }
+      }
     }
 
     type NodePath = string[];
@@ -17,12 +26,19 @@ declare global {
       value: string;
     }
 
+    interface Highlight {
+      path: NodePath;
+      /** If not set, will use the color based on the d1Node. */
+      color?: string;
+    }
+
     interface ViewMode {
-      id: 'all' | 'unused-bytes';
+      id: 'all' | 'unused-bytes' | 'duplicate-modules';
       label: string;
       subLabel: string;
+      enabled: boolean;
       partitionBy?: 'resourceBytes' | 'unusedBytes';
-      highlightNodePaths?: NodePath[];
+      highlights?: Highlight[];
     }
 
     interface Node {

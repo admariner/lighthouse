@@ -125,38 +125,32 @@ describe('._fetchResourceOverProtocol', () => {
 
   it('fetches a file', async () => {
     connectionStub.sendCommand = createMockSendCommandFn()
-      .mockResponse('Network.enable')
       .mockResponse('Page.getFrameTree', {frameTree: {frame: {id: 'FRAME'}}})
       .mockResponse('Network.loadNetworkResource', {
         resource: {success: true, httpStatusCode: 200, stream: '1'},
-      })
-      .mockResponse('Network.disable');
+      });
 
     const data = await fetcher._fetchResourceOverProtocol('https://example.com', {timeout: 500});
-    expect(data).toEqual(streamContents);
+    expect(data).toEqual({content: streamContents, status: 200});
   });
 
-  it('throws when resource could not be fetched', async () => {
+  it('returns null when resource could not be fetched', async () => {
     connectionStub.sendCommand = createMockSendCommandFn()
-      .mockResponse('Network.enable')
       .mockResponse('Page.getFrameTree', {frameTree: {frame: {id: 'FRAME'}}})
       .mockResponse('Network.loadNetworkResource', {
         resource: {success: false, httpStatusCode: 404},
-      })
-      .mockResponse('Network.disable');
+      });
 
-    const dataPromise = fetcher._fetchResourceOverProtocol('https://example.com', {timeout: 500});
-    await expect(dataPromise).rejects.toThrowError(/Loading network resource failed/);
+    const data = await fetcher._fetchResourceOverProtocol('https://example.com', {timeout: 500});
+    expect(data).toEqual({content: null, status: 404});
   });
 
   it('throws on timeout', async () => {
     connectionStub.sendCommand = createMockSendCommandFn()
-      .mockResponse('Network.enable')
       .mockResponse('Page.getFrameTree', {frameTree: {frame: {id: 'FRAME'}}})
       .mockResponse('Network.loadNetworkResource', {
         resource: {success: false, httpStatusCode: 404},
-      }, 100)
-      .mockResponse('Network.disable');
+      }, 100);
 
     const dataPromise = fetcher._fetchResourceOverProtocol('https://example.com', {timeout: 50});
     await expect(dataPromise).rejects.toThrowError(/Timed out fetching resource/);
@@ -164,12 +158,10 @@ describe('._fetchResourceOverProtocol', () => {
 
   it('uses remaining time on _readIOStream', async () => {
     connectionStub.sendCommand = createMockSendCommandFn()
-      .mockResponse('Network.enable')
       .mockResponse('Page.getFrameTree', {frameTree: {frame: {id: 'FRAME'}}})
       .mockResponse('Network.loadNetworkResource', {
         resource: {success: true, httpStatusCode: 200, stream: '1'},
-      }, 500)
-      .mockResponse('Network.disable');
+      }, 500);
 
     let timeout;
     fetcher._readIOStream = jest.fn().mockImplementation((_, options) => {
